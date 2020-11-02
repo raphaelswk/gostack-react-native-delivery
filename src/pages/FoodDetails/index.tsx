@@ -81,8 +81,8 @@ const FoodDetails: React.FC = () => {
         });
 
         setExtras(
-          foodResult.extras.map((e: Extra) => ({
-            ...e,
+          foodResult.extras.map((extra: Omit<Extra, 'quantity'>) => ({
+            ...extra,
             quantity: 0,
           })),
         );
@@ -93,25 +93,24 @@ const FoodDetails: React.FC = () => {
   }, [routeParams]);
 
   function handleIncrementExtra(id: number): void {
-    const extraIndex = extras.findIndex(e => e.id === id);
-    if (extras[extraIndex].quantity) {
-      extras[extraIndex].quantity += 1;
-    } else {
-      extras[extraIndex].quantity = 1;
-    }
-    setExtras([...extras]);
+    setExtras(
+      extras.map(extra =>
+        extra.id === id ? { ...extra, quantity: extra.quantity + 1 } : extra,
+      ),
+    );
   }
 
   function handleDecrementExtra(id: number): void {
-    const extraIndex = extras.findIndex(e => e.id === id);
-    if (extras[extraIndex].quantity > 0) {
-      if (extras[extraIndex].quantity) {
-        extras[extraIndex].quantity -= 1;
-      } else {
-        extras[extraIndex].quantity = 1;
-      }
-      setExtras([...extras]);
-    }
+    const findExtra = extras.find(e => e.id === id);
+
+    if (!findExtra) return;
+    if (findExtra.quantity === 0) return;
+
+    setExtras(
+      extras.map(extra =>
+        extra.id === id ? { ...extra, quantity: extra.quantity - 1 } : extra,
+      ),
+    );
   }
 
   function handleIncrementFood(): void {
@@ -125,6 +124,11 @@ const FoodDetails: React.FC = () => {
   }
 
   const toggleFavorite = useCallback(() => {
+    if (isFavorite) {
+      api.delete(`/favorites/${food.id}`);
+    } else {
+      api.post('favorites', food);
+    }
     setIsFavorite(!isFavorite);
   }, [isFavorite, food]);
 
